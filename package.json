@@ -1,0 +1,22 @@
+{
+  "name": "chickens-by-claude",
+  "version": "1.0.0",
+  "description": "AI-powered chicken coop monitoring with Claude Vision",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "screenshot-desktop": "^1.15.0",
+    "sharp": "^0.33.2",
+    "ws": "^8.16.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

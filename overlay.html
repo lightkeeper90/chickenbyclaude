@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chickens by Claude - Overlay</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: transparent;
+            --panel-bg: rgba(31, 15, 10, 0.95);
+            --border-color: #8B0000;
+            --accent-red: #CC0000;
+            --accent-yellow: #FFD700;
+            --accent-orange: #FF8C00;
+            --text-primary: #FFF8DC;
+            --text-secondary: #D4A574;
+            --glow-yellow: rgba(255, 215, 0, 0.4);
+            --glow-red: rgba(204, 0, 0, 0.4);
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: transparent;
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .overlay-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+        }
+
+        /* Timestamp - Top Left */
+        .timestamp {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 18px;
+            color: var(--accent-yellow);
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8), 0 0 20px var(--glow-yellow);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-left: 3px solid var(--accent-red);
+        }
+
+        /* Live Indicator */
+        .rec-indicator {
+            position: absolute;
+            top: 20px;
+            right: 420px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: 1px solid var(--accent-red);
+        }
+
+        .rec-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            animation: blink 1s ease-in-out infinite;
+            box-shadow: 0 0 10px var(--glow-red);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .rec-text {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--accent-red);
+        }
+
+        /* Right Panel */
+        .info-panel {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 100vh;
+            background: var(--panel-bg);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            border-left: 4px solid var(--border-color);
+            overflow-y: auto;
+            pointer-events: auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--accent-yellow);
+            letter-spacing: 2px;
+            margin-bottom: 4px;
+            text-shadow: 0 0 20px var(--glow-yellow), 0 2px 0 var(--accent-red);
+        }
+
+        .subtitle {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            color: var(--text-secondary);
+        }
+
+        .live-stats {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-top: 8px;
+        }
+
+        .live-badge {
+            background: linear-gradient(180deg, var(--accent-red) 0%, #8B0000 100%);
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 11px;
+            padding: 5px 14px;
+            border-radius: 4px;
+            animation: glow-badge 2s ease-in-out infinite;
+            border: 1px solid var(--accent-yellow);
+        }
+
+        @keyframes glow-badge {
+            0%, 100% { box-shadow: 0 0 10px var(--glow-red); }
+            50% { box-shadow: 0 0 25px var(--glow-red), 0 0 35px var(--glow-yellow); }
+        }
+
+        .viewers {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .stat-card {
+            background: linear-gradient(180deg, rgba(139, 0, 0, 0.4) 0%, rgba(139, 0, 0, 0.2) 100%);
+            border: 2px solid var(--border-color);
+            padding: 10px;
+            position: relative;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-red), var(--accent-yellow), var(--accent-red));
+        }
+
+        .stat-label {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--accent-yellow);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-shadow: 0 0 10px var(--glow-yellow);
+        }
+
+        .stat-unit {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .stat-bar {
+            margin-top: 4px;
+            height: 3px;
+            background: rgba(139, 0, 0, 0.4);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-red), var(--accent-yellow));
+            transition: width 0.5s ease;
+        }
+
+        .stat-subtext {
+            font-size: 8px;
+            color: var(--text-secondary);
+            margin-top: 3px;
+        }
+
+        /* Section Styling */
+        .section {
+            background: linear-gradient(180deg, rgba(139, 0, 0, 0.15) 0%, rgba(139, 0, 0, 0.05) 100%);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--glow-yellow);
+        }
+
+        .section-dot.yellow { background: var(--accent-yellow); }
+        .section-dot.red { background: var(--accent-red); }
+        .section-dot.orange { background: var(--accent-orange); }
+        .section-dot.green { background: #7CFC00; }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--accent-yellow);
+        }
+
+        /* Log Entries */
+        .log-entries {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            background: linear-gradient(90deg, rgba(139, 0, 0, 0.2) 0%, rgba(255, 215, 0, 0.05) 100%);
+            border-left: 3px solid var(--accent-red);
+            padding: 8px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px;
+            line-height: 1.3;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .log-entry:hover {
+            border-left-color: var(--accent-yellow);
+        }
+
+        .log-entry strong { color: var(--accent-yellow); }
+        .log-entry .value { font-weight: 600; }
+        .log-entry .status { color: #7CFC00; }
+        .log-entry .status.warning { color: var(--accent-orange); }
+        .log-entry .status.alert { color: var(--accent-red); }
+
+        /* Chicken Status Grid */
+        .chicken-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+
+        .chicken-status {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 4px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .chicken-status .emoji {
+            font-size: 20px;
+            display: block;
+        }
+
+        .chicken-status .name {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 9px;
+            color: var(--accent-yellow);
+            margin-top: 2px;
+        }
+
+        .chicken-status .state {
+            font-size: 8px;
+            color: var(--text-secondary);
+        }
+
+        .chicken-status.active { border-color: #7CFC00; }
+        .chicken-status.resting { border-color: var(--accent-orange); }
+        .chicken-status.alert { border-color: var(--accent-red); }
+
+        /* Activity Timeline */
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 10px;
+        }
+
+        .timeline-time {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text-secondary);
+            width: 50px;
+        }
+
+        .timeline-event {
+            flex: 1;
+            color: var(--text-primary);
+        }
+
+        .timeline-event .highlight {
+            color: var(--accent-yellow);
+            font-weight: 600;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding-top: 8px;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+        }
+
+        .footer-text {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            color: var(--text-secondary);
+        }
+
+        .footer-text a {
+            color: var(--accent-yellow);
+            text-decoration: none;
+        }
+
+        .ai-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 4px;
+            font-size: 9px;
+            color: var(--text-secondary);
+        }
+
+        .ai-status .pulse {
+            width: 6px;
+            height: 6px;
+            background: #7CFC00;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 5px #7CFC00; }
+            50% { opacity: 0.5; box-shadow: 0 0 15px #7CFC00; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
+    </style>
+</head>
+<body>
+    <div class="overlay-container">
+        <!-- Timestamp - Top Left -->
+        <div class="timestamp" id="timestamp">--/--/---- --:--:--</div>
+        
+        <!-- Live Indicator -->
+        <div class="rec-indicator">
+            <div class="rec-dot"></div>
+            <span class="rec-text">LIVE</span>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="info-panel">
+            <div class="header">
+                <h1 class="title">Chickens by Claude</h1>
+                <p class="subtitle">AI-POWERED COOP MONITORING</p>
+                <div class="live-stats">
+                    <span class="live-badge">LIVE</span>
+                    <span class="viewers">👁 <span id="viewerCount">127</span></span>
+                </div>
+            </div>
+
+            <!-- Environment Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">🌡 Coop Temp</div>
+                    <div class="stat-value" id="temperature">72.4<span class="stat-unit">°F</span></div>
+                    <div class="stat-bar"><div class="stat-bar-fill" id="tempBar" style="width: 72%;"></div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">💧 Humidity</div>
+                    <div class="stat-value" id="humidity">58<span class="stat-unit">%</span></div>
+                    <div class="stat-bar"><div class="stat-bar-fill" id="humidBar" style="width: 58%;"></div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">🥚 Eggs Today</div>
+                    <div class="stat-value" id="eggs">7</div>
+                    <div class="stat-subtext" id="eggsMonth">142 this month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">🐔 Active</div>
+                    <div class="stat-value" id="activeCount">9<span class="stat-unit">/12</span></div>
+                    <div class="stat-subtext">3 roosting</div>
+                </div>
+            </div>
+
+            <!-- Flock Status -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-dot yellow"></div>
+                    <h2 class="section-title">Flock Status</h2>
+                </div>
+                <div class="chicken-grid" id="chickenGrid">
+                    <div class="chicken-status active">
+                        <span class="emoji">🐔</span>
+                        <span class="name">Henrietta</span>
+                        <span class="state">Foraging</span>
+                    </div>
+                    <div class="chicken-status active">
+                        <span class="emoji">🐔</span>
+                        <span class="name">Nugget</span>
+                        <span class="state">Pecking</span>
+                    </div>
+                    <div class="chicken-status resting">
+                        <span class="emoji">🐓</span>
+                        <span class="name">Colonel</span>
+                        <span class="state">Patrolling</span>
+                    </div>
+                    <div class="chicken-status active">
+                        <span class="emoji">🐔</span>
+                        <span class="name">Goldie</span>
+                        <span class="state">Dust bath</span>
+                    </div>
+                    <div class="chicken-status active">
+                        <span class="emoji">🐔</span>
+                        <span class="name">Pepper</span>
+                        <span class="state">Foraging</span>
+                    </div>
+                    <div class="chicken-status resting">
+                        <span class="emoji">🐔</span>
+                        <span class="name">Maple</span>
+                        <span class="state">Nesting</span>
+                    </div>
+                    <div class="chicken-status active">
+                        <span class="emoji">🐔</span>
+                        <span class="name">Cinnamon</span>
+                        <span class="state">Eating</span>
+                    </div>
+                    <div class="chicken-status active">
+                        <span class="emoji">🐔</span>
+                        <span class="name">Biscuit</span>
+                        <span class="state">Preening</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Behavior Analysis -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-dot green"></div>
+                    <h2 class="section-title">Behavior Analysis</h2>
+                </div>
+                <div class="log-entries" id="behaviorLog">
+                    <div class="log-entry">
+                        <strong>Pecking order:</strong> <span class="value">Henrietta</span> maintains alpha - <span class="status">hierarchy stable</span>
+                    </div>
+                    <div class="log-entry">
+                        <strong>Social dynamics:</strong> <span class="value">No aggression detected</span> - <span class="status">flock harmony optimal</span>
+                    </div>
+                    <div class="log-entry">
+                        <strong>Foraging pattern:</strong> <span class="value">82% ground coverage</span> - <span class="status">natural instincts healthy</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Health Metrics -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-dot red"></div>
+                    <h2 class="section-title">Health Metrics</h2>
+                </div>
+                <div class="log-entries" id="healthLog">
+                    <div class="log-entry">
+                        <strong>Feather quality:</strong> <span class="value">94.2% glossy</span> - <span class="status">optimal nutrition</span>
+                    </div>
+                    <div class="log-entry">
+                        <strong>Comb coloration:</strong> <span class="value">Vibrant red</span> - <span class="status">good circulation</span>
+                    </div>
+                    <div class="log-entry">
+                        <strong>Movement analysis:</strong> <span class="value">All gaits normal</span> - <span class="status">no lameness detected</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Timeline -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-dot orange"></div>
+                    <h2 class="section-title">Activity Timeline</h2>
+                </div>
+                <div class="timeline" id="timeline">
+                    <div class="timeline-item">
+                        <span class="timeline-time">14:32</span>
+                        <span class="timeline-event"><span class="highlight">Maple</span> entered nesting box</span>
+                    </div>
+                    <div class="timeline-item">
+                        <span class="timeline-time">14:28</span>
+                        <span class="timeline-event"><span class="highlight">Colonel</span> crowed - duration 2.3s</span>
+                    </div>
+                    <div class="timeline-item">
+                        <span class="timeline-time">14:15</span>
+                        <span class="timeline-event">Dust bath started - <span class="highlight">3 hens</span> participating</span>
+                    </div>
+                    <div class="timeline-item">
+                        <span class="timeline-time">14:02</span>
+                        <span class="timeline-event">Feed dispenser activated - <span class="highlight">8 hens</span> responded</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                <p class="footer-text">POWERED BY <a href="https://anthropic.com" target="_blank">CLAUDE AI</a></p>
+                <div class="ai-status">
+                    <span class="pulse"></span>
+                    <span>AI Analysis Active • Updated <span id="lastUpdate">3s</span> ago</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            document.getElementById('timestamp').textContent = now.toLocaleString('en-GB', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            }).replace(',', '');
+        }
+        updateTimestamp();
+        setInterval(updateTimestamp, 1000);
+
+        // Viewers simulation
+        setInterval(() => {
+            document.getElementById('viewerCount').textContent = Math.max(1, 127 + Math.floor(Math.random() * 20) - 10);
+        }, 5000);
+
+        // Last update counter
+        let lastUpdateSeconds = 0;
+        setInterval(() => {
+            lastUpdateSeconds++;
+            document.getElementById('lastUpdate').textContent = lastUpdateSeconds + 's';
+        }, 1000);
+
+        // ============================================
+        // WEBSOCKET CONNECTION TO SERVER
+        // ============================================
+        
+        const WS_URL = 'ws://localhost:3000';
+        let ws;
+        let reconnectAttempts = 0;
+        
+        function connectWebSocket() {
+            ws = new WebSocket(WS_URL);
+            
+            ws.onopen = () => {
+                console.log('Connected to analysis server');
+                reconnectAttempts = 0;
+                document.querySelector('.ai-status').innerHTML = `
+                    <span class="pulse"></span>
+                    <span>AI Analysis Active • Connected</span>
+                `;
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('Received analysis:', data);
+                    updateAnalysis(data);
+                } catch (e) {
+                    console.error('Failed to parse message:', e);
+                }
+            };
+            
+            ws.onclose = () => {
+                console.log('Disconnected from server');
+                document.querySelector('.ai-status').innerHTML = `
+                    <span class="pulse" style="background: var(--accent-orange);"></span>
+                    <span>Reconnecting...</span>
+                `;
+                // Reconnect after delay
+                setTimeout(() => {
+                    reconnectAttempts++;
+                    if (reconnectAttempts < 10) connectWebSocket();
+                }, 3000);
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        }
+        
+        // Connect on load
+        connectWebSocket();
+        
+        // ============================================
+        // UPDATE FUNCTIONS
+        // ============================================
+        
+        function updateAnalysis(data) {
+            lastUpdateSeconds = 0;
+            
+            // Update environment stats
+            if (data.temperature) {
+                document.getElementById('temperature').innerHTML = data.temperature + '<span class="stat-unit">°F</span>';
+                document.getElementById('tempBar').style.width = (data.temperature / 100 * 100) + '%';
+            }
+            if (data.humidity) {
+                document.getElementById('humidity').innerHTML = data.humidity + '<span class="stat-unit">%</span>';
+                document.getElementById('humidBar').style.width = data.humidity + '%';
+            }
+            if (data.eggs) {
+                document.getElementById('eggs').textContent = data.eggs;
+            }
+            if (data.activeCount) {
+                document.getElementById('activeCount').innerHTML = data.activeCount + '<span class="stat-unit">/12</span>';
+            }
+            
+            // Update behavior log
+            if (data.behaviors && data.behaviors.length > 0) {
+                const behaviorLog = document.getElementById('behaviorLog');
+                data.behaviors.forEach(b => {
+                    addLogEntry(behaviorLog, b.label, b.value, b.status);
+                });
+            }
+            
+            // Update health log
+            if (data.health && data.health.length > 0) {
+                const healthLog = document.getElementById('healthLog');
+                data.health.forEach(h => {
+                    addLogEntry(healthLog, h.label, h.value, h.status);
+                });
+            }
+            
+            // Update timeline
+            if (data.events && data.events.length > 0) {
+                const timeline = document.getElementById('timeline');
+                data.events.forEach(e => {
+                    addTimelineEntry(timeline, e.time, e.event);
+                });
+            }
+            
+            // Update chicken statuses
+            if (data.chickens && data.chickens.length > 0) {
+                updateChickenGrid(data.chickens);
+            }
+        }
+        
+        function addLogEntry(container, label, value, status, statusType = '') {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<strong>${label}:</strong> <span class="value">${value}</span> - <span class="status ${statusType}">${status}</span>`;
+            entry.style.opacity = '0';
+            container.insertBefore(entry, container.firstChild);
+            requestAnimationFrame(() => {
+                entry.style.transition = 'opacity 0.3s ease';
+                entry.style.opacity = '1';
+            });
+            while (container.children.length > 5) container.removeChild(container.lastChild);
+        }
+        
+        function addTimelineEntry(container, time, event) {
+            const entry = document.createElement('div');
+            entry.className = 'timeline-item';
+            entry.innerHTML = `<span class="timeline-time">${time}</span><span class="timeline-event">${event}</span>`;
+            container.insertBefore(entry, container.firstChild);
+            while (container.children.length > 6) container.removeChild(container.lastChild);
+        }
+        
+        function updateChickenGrid(chickens) {
+            const grid = document.getElementById('chickenGrid');
+            chickens.forEach((chicken, i) => {
+                if (grid.children[i]) {
+                    const card = grid.children[i];
+                    card.className = 'chicken-status ' + chicken.state.toLowerCase();
+                    card.querySelector('.name').textContent = chicken.name;
+                    card.querySelector('.state').textContent = chicken.activity;
+                }
+            });
+        }
+
+        // Mock simulation removed - using real WebSocket data from server
+    </script>
+</body>
+</html>
